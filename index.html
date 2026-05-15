@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Assistència Bàsquet</title>
+
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="manifest" href="./manifest.json" />
+
+  <meta name="theme-color" content="#FF8800" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+</head>
+
+<body>
+  <main class="app">
+
+    <section id="screen-home" class="screen active">
+      <div class="hero">
+        <div class="logo-ball">🏀</div>
+        <h1>Assistència Bàsquet</h1>
+        <p>Control d’assistència sincronitzat en temps real per a diversos clubs.</p>
+      </div>
+
+      <section class="card selector-card">
+        <h2>1. Escull l’entitat</h2>
+
+        <label for="entity-select">Entitats guardades</label>
+
+        <div class="entity-preview">
+          <div id="entity-logo-preview" class="entity-logo empty">🏀</div>
+          <div>
+            <select id="entity-select">
+              <option value="">Cap entitat guardada</option>
+            </select>
+
+            <div class="logo-actions">
+              <label for="entity-logo-input" class="mini-file-btn">Afegir escut</label>
+              <input id="entity-logo-input" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" />
+
+              <button id="remove-logo-btn" type="button" class="mini-ghost-btn">Treure escut</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="inline-form">
+          <input
+            id="new-entity-id"
+            type="text"
+            placeholder="Nou ID entitat. Exemple: club_salt"
+            autocomplete="off"
+          />
+          <button id="add-entity-btn" type="button" class="secondary-btn">
+            Afegir
+          </button>
+        </div>
+
+        <button id="delete-entity-btn" type="button" class="ghost-danger-btn">
+          Esborrar entitat seleccionada d’aquest dispositiu
+        </button>
+      </section>
+
+      <section class="card selector-card">
+        <h2>2. Escull l’equip</h2>
+
+        <label for="team-select">Equips de l’entitat</label>
+        <select id="team-select">
+          <option value="">Primer escull una entitat</option>
+        </select>
+
+        <div class="inline-form">
+          <input
+            id="new-team-name"
+            type="text"
+            placeholder="Nou equip. Exemple: Infantil Masculí A"
+            autocomplete="off"
+          />
+          <button id="add-team-btn" type="button" class="secondary-btn">
+            Afegir
+          </button>
+        </div>
+
+        <button id="delete-team-btn" type="button" class="ghost-danger-btn">
+          Esborrar equip seleccionat d’aquest dispositiu
+        </button>
+      </section>
+
+      <button id="open-attendance-btn" class="primary-btn">
+        Obrir assistència
+      </button>
+
+      <p class="info-text">
+        Les entitats i equips es guarden només en aquest dispositiu per facilitar l’accés. Les assistències es desen a Firebase.
+      </p>
+    </section>
+
+    <section id="screen-attendance" class="screen">
+
+      <header class="sticky-header">
+        <div class="header-main">
+          <button id="back-home-btn" class="ghost-btn">← Clubs i equips</button>
+
+          <div class="attendance-title-row">
+            <div id="attendance-logo" class="attendance-logo empty">🏀</div>
+            <div>
+              <h2 id="team-title">Equip</h2>
+              <p id="context-title">Entitat · Data</p>
+            </div>
+          </div>
+        </div>
+
+        <input id="attendance-date" type="date" />
+      </header>
+
+      <div id="locked-banner" class="locked-banner hidden">
+        DIA TANCAT · REGISTRE BLOQUEJAT
+      </div>
+
+      <section class="toolbar card">
+        <div class="import-box">
+          <label for="csv-input" class="file-btn">
+            Importar alumnes CSV
+          </label>
+
+          <input
+            id="csv-input"
+            type="file"
+            accept=".csv,text/csv"
+          />
+
+          <small>Format: Nom, Dorsal</small>
+        </div>
+
+        <div class="toolbar-actions">
+          <button id="monthly-report-btn" class="secondary-btn" type="button">
+            Resum mensual
+          </button>
+
+          <button id="close-day-btn" class="danger-btn" type="button">
+            Tancar Dia
+          </button>
+        </div>
+      </section>
+
+      <section class="legend">
+        <span><b class="dot present"></b> Present</span>
+        <span><b class="dot absent"></b> Absent</span>
+        <span><b class="dot justified"></b> Justificat</span>
+      </section>
+
+      <section class="table-wrap">
+        <div class="attendance-table">
+          <div class="table-header">
+            <div class="sticky-col">Jugador</div>
+            <div>Dorsal</div>
+            <div>Present</div>
+            <div>Absent</div>
+            <div>Justificat</div>
+          </div>
+
+          <div id="players-list">
+            <div class="empty-state">
+              Encara no hi ha jugadors. Importa un CSV per començar.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div id="toast" class="toast hidden"></div>
+    </section>
+
+
+    <section id="screen-report" class="screen">
+      <header class="sticky-header">
+        <div class="header-main">
+          <button id="back-attendance-btn" class="ghost-btn">← Assistència</button>
+
+          <div class="attendance-title-row">
+            <div id="report-logo" class="attendance-logo empty">🏀</div>
+            <div>
+              <h2>Resum mensual</h2>
+              <p id="report-context">Entitat · Equip</p>
+            </div>
+          </div>
+        </div>
+
+        <input id="report-month" type="month" />
+      </header>
+
+      <section class="toolbar card report-controls">
+        <button id="load-report-btn" class="primary-btn compact" type="button">
+          Carregar resum
+        </button>
+
+        <button id="export-report-btn" class="secondary-btn" type="button" disabled>
+          Exportar CSV
+        </button>
+      </section>
+
+      <section class="report-summary card">
+        <div>
+          <span class="summary-label">Jugadors</span>
+          <strong id="summary-players">0</strong>
+        </div>
+        <div>
+          <span class="summary-label">Presents</span>
+          <strong id="summary-present">0</strong>
+        </div>
+        <div>
+          <span class="summary-label">Absents</span>
+          <strong id="summary-absent">0</strong>
+        </div>
+        <div>
+          <span class="summary-label">Justificats</span>
+          <strong id="summary-justified">0</strong>
+        </div>
+      </section>
+
+      <section class="table-wrap report-table-wrap">
+        <div class="monthly-table">
+          <div class="monthly-header">
+            <div class="sticky-col">Jugador</div>
+            <div>Dorsal</div>
+            <div>Presents</div>
+            <div>Absents</div>
+            <div>Justificats</div>
+            <div>Total</div>
+          </div>
+
+          <div id="monthly-report-list">
+            <div class="empty-state">
+              Carrega un mes per veure el resum d’assistències.
+            </div>
+          </div>
+        </div>
+      </section>
+    </section>
+
+  </main>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
