@@ -59,6 +59,8 @@ const state = {
   locked: false,
   players: new Map(),
   reportRows: [],
+  reportDays: [],
+  sessionType: "training",
   unsubscribePlayers: null,
   unsubscribeAttendance: null,
   unsubscribeLock: null
@@ -97,6 +99,7 @@ const contextTitle = $("#context-title");
 const csvInput = $("#csv-input");
 const closeDayBtn = $("#close-day-btn");
 const monthlyReportBtn = $("#monthly-report-btn");
+const sessionTypeSelect = $("#session-type");
 const lockedBanner = $("#locked-banner");
 
 const reportMonthInput = $("#report-month");
@@ -105,6 +108,7 @@ const reportLogo = $("#report-logo");
 const loadReportBtn = $("#load-report-btn");
 const exportReportBtn = $("#export-report-btn");
 const monthlyReportList = $("#monthly-report-list");
+const monthlyDaysList = $("#monthly-days-list");
 const summaryPlayers = $("#summary-players");
 const summaryPresent = $("#summary-present");
 const summaryAbsent = $("#summary-absent");
@@ -346,6 +350,10 @@ attendanceDateInput.addEventListener("change", () => {
   if (state.entityId && state.teamId) {
     openAttendance();
   }
+});
+
+sessionTypeSelect.addEventListener("change", () => {
+  updateSessionType(sessionTypeSelect.value);
 });
 
 csvInput.addEventListener("change", async (event) => {
@@ -605,6 +613,39 @@ function resizeRasterImage(file, maxSize, quality) {
 }
 
 
+async function updateSessionType(nextType) {
+  if (!["training", "match", "other"].includes(nextType)) {
+    showToast("Tipus de dia no vàlid.");
+    return;
+  }
+
+  if (state.locked) {
+    sessionTypeSelect.value = state.sessionType;
+    showToast("No es pot canviar: el dia està tancat.");
+    return;
+  }
+
+  state.sessionType = nextType;
+
+  try {
+    await setDoc(
+      getLockRef(),
+      {
+        entityId: state.entityId,
+        date: state.date,
+        sessionType: nextType,
+        updatedAt: serverTimestamp()
+      },
+      { merge: true }
+    );
+
+    showToast("Tipus de dia actualitzat.");
+  } catch (error) {
+    console.error(error);
+    showToast("No s'ha pogut guardar el tipus de dia.");
+  }
+}
+
 function openMonthlyReport() {
   reportMonthInput.value = state.date.slice(0, 7);
   reportContext.textContent = `${state.entityId} · ${state.teamName}`;
@@ -615,6 +656,7 @@ function openMonthlyReport() {
 
 function resetMonthlyReport() {
   state.reportRows = [];
+  state.reportDays = [];
   exportReportBtn.disabled = true;
 
   summaryPlayers.textContent = "0";
@@ -625,6 +667,12 @@ function resetMonthlyReport() {
   monthlyReportList.innerHTML = `
     <div class="empty-state">
       Prem “Carregar resum” per calcular les assistències del mes.
+    </div>
+  `;
+
+  monthlyDaysList.innerHTML = `
+    <div class="empty-state">
+      Els dies amb registre apareixeran aquí quan carreguis el resum.
     </div>
   `;
 }
@@ -665,12 +713,26 @@ async function loadMonthlyReport() {
     });
 
     const dates = getDatesForMonth(monthValue);
+    const daySummaries = [];
 
     for (const date of dates) {
+      const metaSnapshot = await getDoc(
+        doc(db, "assistencies", state.entityId, "dies", date, "meta", META_DOC_ID)
+      );
+
       const attendanceSnapshot = await getDocs(query(
         collection(db, "assistencies", state.entityId, "dies", date, "registres"),
         where("teamId", "==", state.teamId)
       ));
+
+      const daySummary = {
+        date,
+        sessionType: metaSnapshot.exists() ? (metaSnapshot.data().sessionType || "training") : "training",
+        present: 0,
+        absent: 0,
+        justified: 0,
+        total: 0
+      };
 
       attendanceSnapshot.forEach((docSnap) => {
         const data = docSnap.data();
@@ -695,15 +757,27 @@ async function loadMonthlyReport() {
         if (status === "present") {
           row.present++;
           row.total++;
+          daySummary.present++;
+          daySummary.total++;
         } else if (status === "absent") {
           row.absent++;
           row.total++;
+          daySummary.absent++;
+          daySummary.total++;
         } else if (status === "justified") {
           row.justified++;
           row.total++;
+          daySummary.justified++;
+          daySummary.total++;
         }
       });
+
+      if (daySummary.total > 0) {
+        daySummaries.push(daySummary);
+      }
     }
+
+    state.reportDays = daySummaries;
 
     state.reportRows = Array.from(rowsByPlayer.values())
       .sort((a, b) => {
@@ -718,6 +792,7 @@ async function loadMonthlyReport() {
       });
 
     renderMonthlyReport();
+    renderMonthlyDays();
 
     showToast("Resum mensual carregat.");
   } catch (error) {
@@ -732,6 +807,55 @@ async function loadMonthlyReport() {
     loadReportBtn.disabled = false;
     loadReportBtn.textContent = "Carregar resum";
   }
+}
+
+function renderMonthlyDays() {
+  const days = state.reportDays || [];
+
+  if (!days.length) {
+    monthlyDaysList.innerHTML = `
+      <div class="empty-state">
+        No hi ha cap dia amb registres aquest mes.
+      </div>
+    `;
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+
+  for (const day of days) {
+    const item = document.createElement("div");
+    item.className = "day-row";
+
+    item.innerHTML = `
+      <div>${escapeHTML(formatShortDate(day.date))}</div>
+      <div><span class="session-pill ${escapeHTML(day.sessionType)}">${escapeHTML(getSessionTypeLabel(day.sessionType))}</span></div>
+      <div><span class="count-pill present-count">${day.present}</span></div>
+      <div><span class="count-pill absent-count">${day.absent}</span></div>
+      <div><span class="count-pill justified-count">${day.justified}</span></div>
+      <div><span class="count-pill">${day.total}</span></div>
+    `;
+
+    fragment.appendChild(item);
+  }
+
+  monthlyDaysList.replaceChildren(fragment);
+}
+
+function getSessionTypeLabel(sessionType) {
+  if (sessionType === "match") return "Partit";
+  if (sessionType === "other") return "Altres";
+  return "Entrenament";
+}
+
+function formatShortDate(isoDate) {
+  const [year, month, day] = isoDate.split("-").map(Number);
+
+  return new Intl.DateTimeFormat("ca-ES", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  }).format(new Date(year, month - 1, day));
 }
 
 function renderMonthlyReport() {
@@ -796,8 +920,24 @@ function exportMonthlyReportCSV() {
     ["Equip", state.teamName],
     ["Mes", month],
     [],
-    ["Jugador", "Dorsal", "Presents", "Absents", "Justificats", "Total"]
+    ["Dies del mes"],
+    ["Data", "Tipus", "Presents", "Absents", "Justificats", "Total"]
   ];
+
+  for (const day of state.reportDays) {
+    rows.push([
+      day.date,
+      getSessionTypeLabel(day.sessionType),
+      day.present,
+      day.absent,
+      day.justified,
+      day.total
+    ]);
+  }
+
+  rows.push([]);
+  rows.push(["Resum per jugador"]);
+  rows.push(["Jugador", "Dorsal", "Presents", "Absents", "Justificats", "Total"]);
 
   for (const row of state.reportRows) {
     rows.push([
@@ -912,7 +1052,11 @@ function subscribeToLock() {
   state.unsubscribeLock = onSnapshot(
     lockRef,
     (snapshot) => {
-      state.locked = snapshot.exists() && snapshot.data().locked === true;
+      const data = snapshot.exists() ? snapshot.data() : {};
+
+      state.locked = data.locked === true;
+      state.sessionType = data.sessionType || "training";
+      sessionTypeSelect.value = state.sessionType;
 
       renderLockState();
       renderPlayers();
@@ -1166,6 +1310,8 @@ async function importPlayers(players) {
           teamId: state.teamId,
           teamName: state.teamName,
           playerId,
+          playerName: player.name,
+          dorsal: player.dorsal,
           date: state.date,
           status: "absent",
           createdAt: serverTimestamp(),
@@ -1195,6 +1341,7 @@ async function closeDay() {
         locked: true,
         entityId: state.entityId,
         date: state.date,
+        sessionType: state.sessionType || "training",
         lockedAt: serverTimestamp(),
         lockedByClient: getClientId()
       },
@@ -1208,6 +1355,7 @@ function renderLockState() {
 
   closeDayBtn.disabled = state.locked;
   closeDayBtn.textContent = state.locked ? "Dia Tancat" : "Tancar Dia";
+  sessionTypeSelect.disabled = state.locked;
 
   const fileLabel = document.querySelector(".file-btn");
   if (fileLabel) {

@@ -691,3 +691,96 @@ select:focus {
     top: 132px;
   }
 }
+
+
+/* Selector visible de tipus de dia */
+.session-type-box {
+  min-width: 210px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.session-type-box label {
+  margin-bottom: 0;
+}
+
+.session-type-box select {
+  margin-bottom: 0;
+  min-height: 58px;
+  border: 1px solid rgba(255, 136, 0, 0.45);
+  background: #111111;
+  color: #ffffff;
+  font-weight: 900;
+}
+
+/* Taula de dies del resum mensual */
+.days-table {
+  min-width: 720px;
+}
+
+.days-header,
+.day-row {
+  display: grid;
+  grid-template-columns: 150px 170px 120px 120px 130px 100px;
+  align-items: center;
+}
+
+.days-header {
+  position: sticky;
+  top: 84px;
+  z-index: 20;
+  background: #111111;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.days-header > div,
+.day-row > div {
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.day-row:nth-child(odd) {
+  background: var(--panel);
+}
+
+.day-row:nth-child(even) {
+  background: var(--panel-alt);
+}
+
+.session-pill {
+  display: inline-grid;
+  place-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #111111;
+  border: 1px solid var(--border);
+  font-weight: 900;
+}
+
+.session-pill.training {
+  color: var(--orange);
+}
+
+.session-pill.match {
+  color: #93C5FD;
+}
+
+.session-pill.other {
+  color: #D1D5DB;
+}
+
+@media (max-width: 720px) {
+  .session-type-box {
+    width: 100%;
+  }
+
+  .days-header {
+    top: 132px;
+  }
+}

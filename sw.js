@@ -1,4 +1,4 @@
-const CACHE_NAME = "assistencia-basquet-v4-informes";
+const CACHE_NAME = "assistencia-basquet-v6-selector-visible";
 
 const STATIC_ASSETS = [
   "./",

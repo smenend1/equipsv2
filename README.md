@@ -39,7 +39,7 @@ assistencies/{entityId}/dies/{date}/meta/_meta
 
 ## Escuts d'entitat
 
-Aquesta versió permet assignar un escut o una imatge a cada entitat des del selector principal.
+Aquesta versió permet assignar un escut o imatge a cada entitat des del selector principal.
 
 - L'escut es guarda al LocalStorage del dispositiu.
 - No ocupa Firestore.
@@ -64,3 +64,16 @@ Permet:
 - Exportar el resum a CSV.
 
 El resum mensual llegeix les assistències de totes les dates del mes a Firestore. No canvia l'estructura de dades existent.
+
+
+## Versió corregida: selector de tipus de dia visible
+
+Aquesta versió mostra clarament el selector **Tipus de dia** a la pantalla d'assistència, entre el botó d'importar CSV i els botons de resum/tancament.
+
+Opcions:
+
+- Entrenament
+- Partit
+- Altres
+
+El resum mensual inclou una taula amb els dies registrats del mes i el tipus corresponent.

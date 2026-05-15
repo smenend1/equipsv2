@@ -132,6 +132,15 @@
           <small>Format: Nom, Dorsal</small>
         </div>
 
+        <div class="session-type-box">
+          <label for="session-type">Tipus de dia</label>
+          <select id="session-type">
+            <option value="training">Entrenament</option>
+            <option value="match">Partit</option>
+            <option value="other">Altres</option>
+          </select>
+        </div>
+
         <div class="toolbar-actions">
           <button id="monthly-report-btn" class="secondary-btn" type="button">
             Resum mensual
@@ -214,6 +223,25 @@
         <div>
           <span class="summary-label">Justificats</span>
           <strong id="summary-justified">0</strong>
+        </div>
+      </section>
+
+      <section class="table-wrap report-table-wrap">
+        <div class="days-table">
+          <div class="days-header">
+            <div>Data</div>
+            <div>Tipus</div>
+            <div>Presents</div>
+            <div>Absents</div>
+            <div>Justificats</div>
+            <div>Total</div>
+          </div>
+
+          <div id="monthly-days-list">
+            <div class="empty-state">
+              Els dies amb registre apareixeran aquí quan carreguis el resum.
+            </div>
+          </div>
         </div>
       </section>
 
