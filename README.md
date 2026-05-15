@@ -39,7 +39,7 @@ assistencies/{entityId}/dies/{date}/meta/_meta
 
 ## Escuts d'entitat
 
-Aquesta versió permet assignar un escut o imatge a cada entitat des del selector principal.
+Aquesta versió permet assignar un escut o una imatge a cada entitat des del selector principal.
 
 - L'escut es guarda al LocalStorage del dispositiu.
 - No ocupa Firestore.
